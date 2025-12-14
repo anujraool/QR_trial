@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Treasure Hunt Question</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    line-height: 1.6;
+  }
+  .option {
+    margin: 10px 0;
+  }
+  button {
+    margin-top: 10px;
+  }
+  #result {
+    margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h2>Question 1</h2>
+<p>I have keys but no locks. I have space but no room. What am I?</p>
+
+<div class="option">
+  <input type="radio" name="answer" value="A) A map"> A) A map
+</div>
+<div class="option">
+  <input type="radio" name="answer" value="B) A keyboard"> B) A keyboard
+</div>
+<div class="option">
+  <input type="radio" name="answer" value="C) A book"> C) A book
+</div>
+<div class="option">
+  <input type="radio" name="answer" value="D) A clock"> D) A clock
+</div>
+
+<button onclick="generateSentence()">Generate Sentence</button>
+
+<p id="result"></p>
+<button id="copyBtn" onclick="copySentence()" style="display:none;">Copy</button>
+
+<script>
+function generateSentence() {
+  const options = document.getElementsByName('answer');
+  let selected = null;
+  for (const opt of options) {
+    if (opt.checked) {
+      selected = opt.value;
+      break;
+    }
+  }
+  if (!selected) {
+    alert("Please select an option!");
+    return;
+  }
+
+  // Generate sentence
+  const sentence = `You selected "${selected}". That's your clue for the next QR!`;
+  document.getElementById('result').innerText = sentence;
+
+  // Show copy button
+  document.getElementById('copyBtn').style.display = 'inline';
+}
+
+function copySentence() {
+  const sentence = document.getElementById('result').innerText;
+  navigator.clipboard.writeText(sentence).then(() => {
+    alert("Copied to clipboard!");
+  });
+}
+</script>
+
+</body>
+</html>
