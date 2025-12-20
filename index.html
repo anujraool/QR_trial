@@ -820,37 +820,7 @@
     const handlePressStart = () => {
         pressTimer = setTimeout(() => {
             pauseStory();
-            document.querySelector('.header').style.opacity = '0';
-            document.querySelector('.footer').style.opacity = '0';
-            document.querySelector('.progress-container').style.opacity = '0';
-        }, 200);
-    };
-
-    const handlePressEnd = (e, isRight) => {
-        clearTimeout(pressTimer);
-        
-        document.querySelector('.header').style.opacity = '1';
-        document.querySelector('.footer').style.opacity = '1';
-        document.querySelector('.progress-container').style.opacity = '1';
-
-        // Attempt to start audio on first interaction if it hasn't started
-        ensureAudioPlays();
-
-        if (isPaused) {
-            resumeStory();
-        } else {
-            if (isRight) nextStory();
-            else prevStory();
-        }
-    };
-
-    tapRight.addEventListener('mousedown', handlePressStart);
-    tapRight.addEventListener('touchstart', handlePressStart);
-    tapRight.addEventListener('mouseup', (e) => handlePressEnd(e, true));
-    tapRight.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, true); });
-
-    tapLeft.addEventListener('mousedown', handlePressStart);
-    tapLeft.addEventListener('touchstart', handlePressStart);
+index.htmlart);
     tapLeft.addEventListener('mouseup', (e) => handlePressEnd(e, false));
     tapLeft.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, false); });
 
