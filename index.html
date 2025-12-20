@@ -366,13 +366,436 @@
         remainingTime = stories[currentIndex].duration - elapsed;
     }
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Insta-Style Story Viewer</title>
+    <style>
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- CONTAINER (Mobile Wrapper) --- */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            max-width: 480px; /* Limits width on desktop */
+            position: relative;
+            background: #1a1a1a;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- STORY MEDIA --- */
+        .story-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        /* --- UI OVERLAYS --- */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none; /* Let clicks pass through */
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.6) 100%);
+        }
+
+        /* --- PROGRESS BARS --- */
+        .progress-container {
+            display: flex;
+            gap: 4px;
+            padding: 12px 10px 0;
+            width: 100%;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width linear;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            pointer-events: auto;
+        }
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+        }
+        .username {
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .time-ago {
+            font-size: 12px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+        
+        /* Header Actions (Mute & Close) */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+        }
+
+        /* --- FOOTER / INPUT --- */
+        .footer {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            pointer-events: auto;
+        }
+        .message-box {
+            flex: 1;
+            height: 44px;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 22px;
+            background: transparent;
+            color: white;
+            padding: 0 20px;
+            font-size: 14px;
+        }
+        .message-box::placeholder { color: rgba(255,255,255,0.8); }
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            fill: white;
+            cursor: pointer;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        }
+
+        /* --- TOUCH ZONES --- */
+        .tap-zone {
+            position: absolute;
+            top: 70px; 
+            bottom: 80px; 
+            width: 50%;
+            z-index: 20;
+            pointer-events: auto;
+        }
+        .tap-left { left: 0; }
+        .tap-right { right: 0; }
+
+        /* Loader */
+        .loader {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 30px; height: 30px;
+            animation: spin 1s linear infinite;
+            z-index: 0;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    
+    <!-- AUDIO ELEMENT -->
+    <!-- Using a copyright-free chill track for demo purposes -->
+    <audio id="bg-audio" loop>
+        <source src="https://coderadio-admin-v2.freecodecamp.org/listen/coderadio/radio.mp3" type="audio/mpeg">
+        <!-- Alternative fallback: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" -->
+    </audio>
+
+    <!-- Image Display -->
+    <div class="loader" id="loader"></div>
+    <img id="story-img" class="story-image" src="" alt="Story">
+
+    <!-- Touch Zones -->
+    <div class="tap-zone tap-left" id="tap-left"></div>
+    <div class="tap-zone tap-right" id="tap-right"></div>
+
+    <!-- UI Overlay -->
+    <div class="ui-layer">
+        
+        <!-- Top Section -->
+        <div>
+            <div class="progress-container" id="progress-container"></div>
+
+            <div class="header">
+                <img src="https://ui-avatars.com/api/?name=My+Github&background=random&color=fff" class="avatar" alt="User">
+                <div class="user-info">
+                    <span class="username">github_user</span>
+                    <span class="time-ago">2h</span>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Mute Toggle Button -->
+                    <button class="icon-btn" id="mute-btn">
+                        <!-- Speaker Off Icon (Default) -->
+                        <svg id="icon-muted" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                        <!-- Speaker On Icon -->
+                        <svg id="icon-unmuted" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                    <!-- Close Button -->
+                    <button class="icon-btn">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="footer">
+            <input type="text" class="message-box" placeholder="Send message">
+            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    const stories = [
+        { url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', duration: 5000 },
+        { url: 'https://images.unsplash.com/photo-1524230659092-07f99a75c013?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', duration: 5000 },
+        { url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', duration: 5000 },
+        { url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', duration: 5000 }
+    ];
+
+    // --- STATE ---
+    let currentIndex = 0;
+    let startTime = 0;
+    let pausedTime = 0;
+    let isPaused = false;
+    let animationFrameId;
+    let remainingTime = 0;
+    let isAudioPlaying = false;
+
+    // --- ELEMENTS ---
+    const imgElement = document.getElementById('story-img');
+    const progressContainer = document.getElementById('progress-container');
+    const loader = document.getElementById('loader');
+    const audio = document.getElementById('bg-audio');
+    const muteBtn = document.getElementById('mute-btn');
+    const iconMuted = document.getElementById('icon-muted');
+    const iconUnmuted = document.getElementById('icon-unmuted');
+
+    // --- AUDIO LOGIC ---
+    function toggleAudio() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                isAudioPlaying = true;
+                updateMuteIcon(true);
+            }).catch(e => console.log("Audio prevent:", e));
+        } else {
+            audio.pause();
+            isAudioPlaying = false;
+            updateMuteIcon(false);
+        }
+    }
+
+    function updateMuteIcon(isPlaying) {
+        if (isPlaying) {
+            iconMuted.style.display = 'none';
+            iconUnmuted.style.display = 'block';
+        } else {
+            iconMuted.style.display = 'block';
+            iconUnmuted.style.display = 'none';
+        }
+    }
+
+    // Try to play audio on first user interaction if blocked
+    function ensureAudioPlays() {
+        if (!isAudioPlaying) {
+            // Attempt to play
+            audio.play().then(() => {
+                isAudioPlaying = true;
+                updateMuteIcon(true);
+            }).catch(() => {
+                // If still blocked, user has to manually click mute btn
+            });
+        }
+    }
+
+    // --- INIT ---
+    function init() {
+        createProgressBars();
+        loadStory(currentIndex);
+        
+        // Attempt low-volume autoplay (often blocked, but worth a try)
+        audio.volume = 0.5;
+        
+        // Listener for manual mute toggle
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't pause story
+            toggleAudio();
+        });
+    }
+
+    function createProgressBars() {
+        progressContainer.innerHTML = '';
+        stories.forEach((_, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'progress-bar';
+            const fill = document.createElement('div');
+            fill.className = 'progress-fill';
+            fill.id = `fill-${index}`;
+            bar.appendChild(fill);
+            progressContainer.appendChild(bar);
+        });
+    }
+
+    // --- STORY LOGIC ---
+    function loadStory(index) {
+        if (index < 0) index = 0;
+        if (index >= stories.length) { 
+            console.log("All stories viewed"); 
+            return; 
+        }
+
+        currentIndex = index;
+        cancelAnimationFrame(animationFrameId);
+        resetProgressBars();
+        
+        loader.style.display = 'block';
+        imgElement.style.opacity = '0.5';
+
+        const img = new Image();
+        img.src = stories[index].url;
+        
+        img.onload = () => {
+            imgElement.src = stories[index].url;
+            imgElement.style.opacity = '1';
+            loader.style.display = 'none';
+            startTimer(stories[index].duration);
+        };
+    }
+
+    function startTimer(duration) {
+        startTime = Date.now();
+        remainingTime = duration;
+        isPaused = false;
+        
+        function animate() {
+            if (isPaused) return;
+
+            const now = Date.now();
+            const elapsed = now - startTime;
+            const progress = Math.min((elapsed / duration) * 100, 100);
+
+            const currentFill = document.getElementById(`fill-${currentIndex}`);
+            if (currentFill) currentFill.style.width = `${progress}%`;
+
+            if (elapsed < duration) {
+                animationFrameId = requestAnimationFrame(animate);
+            } else {
+                nextStory();
+            }
+        }
+        animationFrameId = requestAnimationFrame(animate);
+    }
+
+    function resetProgressBars() {
+        stories.forEach((_, i) => {
+            const fill = document.getElementById(`fill-${i}`);
+            fill.style.transition = 'none'; 
+            if (i < currentIndex) fill.style.width = '100%';
+            else fill.style.width = '0%';
+        });
+    }
+
+    // --- CONTROLS ---
+    function nextStory() {
+        if (currentIndex < stories.length - 1) {
+            loadStory(currentIndex + 1);
+        } else {
+            console.log("End");
+            loadStory(0); // Loop
+        }
+    }
+
+    function prevStory() {
+        if (currentIndex > 0) {
+            const currentFill = document.getElementById(`fill-${currentIndex}`);
+            currentFill.style.width = '0%';
+            loadStory(currentIndex - 1);
+        } else {
+            loadStory(0);
+        }
+    }
+
+    function pauseStory() {
+        if (isPaused) return;
+        isPaused = true;
+        cancelAnimationFrame(animationFrameId);
+        pausedTime = Date.now();
+        const elapsed = pausedTime - startTime;
+        remainingTime = stories[currentIndex].duration - elapsed;
+    }
+
     function resumeStory() {
         if (!isPaused) return;
         isPaused = false;
-        // Adjust start time to account for the pause
         startTime = Date.now() - (stories[currentIndex].duration - remainingTime);
         
-        // Restart animation loop
         function animate() {
             if (isPaused) return;
             const duration = stories[currentIndex].duration;
@@ -393,58 +816,50 @@
     }
 
     // --- EVENT LISTENERS ---
-
     const tapLeft = document.getElementById('tap-left');
     const tapRight = document.getElementById('tap-right');
-    const container = document.getElementById('app-container');
 
-    // MOUSE / TOUCH EVENTS
-    
-    // Hold to pause
     let pressTimer;
 
     const handlePressStart = () => {
         pressTimer = setTimeout(() => {
             pauseStory();
-            // Optional: Hide UI on long press
             document.querySelector('.header').style.opacity = '0';
             document.querySelector('.footer').style.opacity = '0';
             document.querySelector('.progress-container').style.opacity = '0';
-        }, 200); // 200ms delay to distinguish tap from hold
+        }, 200);
     };
 
     const handlePressEnd = (e, isRight) => {
         clearTimeout(pressTimer);
         
-        // Show UI again
         document.querySelector('.header').style.opacity = '1';
         document.querySelector('.footer').style.opacity = '1';
         document.querySelector('.progress-container').style.opacity = '1';
 
+        // Attempt to start audio on first interaction if it hasn't started
+        ensureAudioPlays();
+
         if (isPaused) {
             resumeStory();
         } else {
-            // It was a tap
             if (isRight) nextStory();
             else prevStory();
         }
     };
 
-    // Right Zone
     tapRight.addEventListener('mousedown', handlePressStart);
     tapRight.addEventListener('touchstart', handlePressStart);
     tapRight.addEventListener('mouseup', (e) => handlePressEnd(e, true));
     tapRight.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, true); });
 
-    // Left Zone
     tapLeft.addEventListener('mousedown', handlePressStart);
     tapLeft.addEventListener('touchstart', handlePressStart);
     tapLeft.addEventListener('mouseup', (e) => handlePressEnd(e, false));
     tapLeft.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, false); });
 
-    // Start
     init();
 
 </script>
 </body>
-                  </html>
+</html>
