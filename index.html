@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Location Story Viewer</title>
+    <title>World Landmarks Viewer</title>
     <style>
         /* --- RESET & BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -23,7 +23,7 @@
         #app-container {
             width: 100%;
             height: 100%;
-            max-width: 480px; /* Desktop limits */
+            max-width: 480px; /* Limits width on desktop */
             position: relative;
             background: #222;
             overflow: hidden;
@@ -42,7 +42,7 @@
             left: 0;
             z-index: 1;
             opacity: 0; /* Hidden until loaded */
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.5s ease-in-out;
         }
 
         /* --- UI OVERLAYS --- */
@@ -57,7 +57,7 @@
             flex-direction: column;
             justify-content: space-between;
             pointer-events: none; /* Let clicks pass through */
-            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.8) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.6) 100%);
         }
 
         /* --- PROGRESS BARS --- */
@@ -78,7 +78,6 @@
             height: 100%;
             background: #fff;
             width: 0%;
-            /* Transition handled via JS or CSS depending on state */
         }
 
         /* --- HEADER --- */
@@ -203,6 +202,7 @@
             z-index: 4;
             display: none;
             width: 80%;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
 
     </style>
@@ -211,16 +211,14 @@
 
 <div id="app-container">
     
-    <!-- AUDIO: Chill Lo-Fi Background Music -->
+    <!-- AUDIO: "Gymnopedie No. 1" (Satie) -->
     <audio id="bg-audio" loop>
-        <source src="https://cdn.freecodecamp.org/testable-projects-fcc/audio/Beep.mp3" type="audio/mpeg"> 
-        <!-- Using a short sample for test. Replace src with real music URL below for production: -->
-        <!-- Real Music URL: https://coderadio-admin-v2.freecodecamp.org/listen/coderadio/radio.mp3 -->
+        <source src="https://raw.githubusercontent.com/noobsandnerdsgroup/audio/master/Gymnopedie%20No%201.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Display Elements -->
     <div class="loader" id="loader"></div>
-    <div class="error-msg" id="error-msg">Image failed to load.<br>Skipping...</div>
+    <div class="error-msg" id="error-msg"></div>
     <img id="story-img" class="story-image" src="" alt="Story">
 
     <!-- Touch Navigation Zones -->
@@ -235,12 +233,12 @@
             <div class="progress-container" id="progress-container"></div>
 
             <div class="header">
-                <img src="https://ui-avatars.com/api/?name=Travel+Life&background=0D8ABC&color=fff" class="avatar" alt="User">
+                <img src="https://ui-avatars.com/api/?name=World+Tour&background=0066cc&color=fff" class="avatar" alt="User">
                 <div class="user-info">
-                    <span class="username">travel_addict</span>
+                    <span class="username">global_explorer</span>
                     <span class="location-tag">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        Kyoto, Japan
+                        World Tour
                     </span>
                 </div>
                 
@@ -262,7 +260,7 @@
 
         <!-- Bottom Section -->
         <div class="footer">
-            <input type="text" class="message-box" placeholder="Send message">
+            <input type="text" class="message-box" placeholder="Reply to global_explorer...">
             <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         </div>
@@ -271,18 +269,22 @@
 
 <script>
     // --- CONFIGURATION ---
-    // Using Picsum Photos for reliability (Unsplash direct links often block hotlinking)
+    // Make sure these files are in the SAME folder as this HTML file.
     const stories = [
-        { url: 'https://picsum.photos/800/1200?random=1', duration: 5000 },
-        { url: 'https://picsum.photos/800/1200?random=2', duration: 5000 },
-        { url: 'https://picsum.photos/800/1200?random=3', duration: 5000 },
-        { url: 'https://picsum.photos/800/1200?random=4', duration: 5000 },
-        { url: 'https://picsum.photos/800/1200?random=5', duration: 5000 }
+        { url: './Acropolis_Greece.png', duration: 5000 },
+        { url: './Bigben_UK.png', duration: 5000 },
+        { url: './CNtower_canada.png', duration: 5000 },
+        { url: './Colosseum_Italy.png', duration: 5000 },
+        { url: './EiffleTower_France.png', duration: 5000 },
+        { url: './Greatwall_chaina.png', duration: 5000 },
+        { url: './Osakacastle_japan.png', duration: 5000 },
+        { url: './SagradaFamilia_turkey.png', duration: 5000 },
+        { url: './SydneyHarbourBridge_Australia.png', duration: 5000 },
+        { url: './SydneyOperaHouse_Australia.png', duration: 5000 },
+        { url: './empirestatebuilding_usa.png', duration: 5000 },
+        { url: './hagiasophia_turkey.png', duration: 5000 },
+        { url: './statusleofliberty_usa.png', duration: 5000 }
     ];
-
-    // For real music, replace the src in the <audio> tag with:
-    // https://coderadio-admin-v2.freecodecamp.org/listen/coderadio/radio.mp3
-    // or any other direct mp3 link.
 
     // --- STATE ---
     let currentIndex = 0;
@@ -304,11 +306,9 @@
     const iconUnmuted = document.getElementById('icon-unmuted');
 
     // --- AUDIO LOGIC ---
-    // Use a real stream URL for better experience
-    audio.src = "https://coderadio-admin-v2.freecodecamp.org/listen/coderadio/radio.mp3";
-
     function toggleAudio() {
         if (audio.paused) {
+            audio.volume = 0.5;
             audio.play().then(() => {
                 isAudioPlaying = true;
                 updateMuteIcon(true);
@@ -332,10 +332,11 @@
 
     function ensureAudioPlays() {
         if (!isAudioPlaying) {
+            audio.volume = 0.5;
             audio.play().then(() => {
                 isAudioPlaying = true;
                 updateMuteIcon(true);
-            }).catch(() => { /* Auto-play blocked, waiting for click */ });
+            }).catch(() => { /* Blocked */ });
         }
     }
 
@@ -343,8 +344,6 @@
     function init() {
         createProgressBars();
         loadStory(currentIndex);
-        
-        audio.volume = 0.4;
         
         muteBtn.addEventListener('click', (e) => {
             e.stopPropagation(); 
@@ -369,7 +368,6 @@
     function loadStory(index) {
         if (index < 0) index = 0;
         if (index >= stories.length) { 
-            // End of stories, loop back or close
             index = 0; 
         }
 
@@ -382,11 +380,10 @@
         errorMsg.style.display = 'none';
         imgElement.style.opacity = '0';
         
-        // Create new image object to preload
+        // Preload
         const img = new Image();
         img.src = stories[index].url;
         
-        // SUCCESS handler
         img.onload = () => {
             imgElement.src = stories[index].url;
             imgElement.style.opacity = '1';
@@ -394,14 +391,13 @@
             startTimer(stories[index].duration);
         };
 
-        // ERROR handler (skips to next if image fails)
         img.onerror = () => {
             loader.style.display = 'none';
             errorMsg.style.display = 'block';
-            console.error("Image failed to load: " + stories[index].url);
+            errorMsg.innerText = `Image not found:\n${stories[index].url}\nSkipping...`;
             setTimeout(() => {
                 nextStory();
-            }, 1000); // Wait 1s then skip
+            }, 2000);
         };
     }
 
@@ -443,7 +439,6 @@
         if (currentIndex < stories.length - 1) {
             loadStory(currentIndex + 1);
         } else {
-            console.log("Stories finished");
             loadStory(0); // Restart
         }
     }
@@ -491,7 +486,7 @@
         animationFrameId = requestAnimationFrame(animate);
     }
 
-    // --- INTERACTION LISTENERS ---
+    // --- INTERACTION ---
     const tapLeft = document.getElementById('tap-left');
     const tapRight = document.getElementById('tap-right');
     let pressTimer;
@@ -511,7 +506,7 @@
         document.querySelector('.footer').style.opacity = '1';
         document.querySelector('.progress-container').style.opacity = '1';
 
-        ensureAudioPlays(); // Try enabling audio on interaction
+        ensureAudioPlays();
 
         if (isPaused) {
             resumeStory();
@@ -521,19 +516,16 @@
         }
     };
 
-    // Right Tap
     tapRight.addEventListener('mousedown', handlePressStart);
     tapRight.addEventListener('touchstart', handlePressStart);
     tapRight.addEventListener('mouseup', (e) => handlePressEnd(e, true));
     tapRight.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, true); });
 
-    // Left Tap
     tapLeft.addEventListener('mousedown', handlePressStart);
     tapLeft.addEventListener('touchstart', handlePressStart);
     tapLeft.addEventListener('mouseup', (e) => handlePressEnd(e, false));
     tapLeft.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, false); });
 
-    // Start App
     init();
 
 </script>
