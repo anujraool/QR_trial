@@ -19,11 +19,11 @@
             align-items: center;
         }
 
-        /* --- CONTAINER (Mobile Wrapper) --- */
+        /* --- CONTAINER --- */
         #app-container {
             width: 100%;
             height: 100%;
-            max-width: 480px; /* Limits width on desktop */
+            max-width: 480px; 
             position: relative;
             background: #222;
             overflow: hidden;
@@ -41,8 +41,8 @@
             top: 0;
             left: 0;
             z-index: 1;
-            opacity: 0; /* Hidden until loaded */
-            transition: opacity 0.5s ease-in-out;
+            opacity: 0; 
+            transition: opacity 0.4s ease-in-out;
         }
 
         /* --- UI OVERLAYS --- */
@@ -60,7 +60,7 @@
             background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.6) 100%);
         }
 
-        /* --- PROGRESS BARS --- */
+        /* --- PROGRESS BARS (Static Indicators) --- */
         .progress-container {
             display: flex;
             gap: 4px;
@@ -78,6 +78,7 @@
             height: 100%;
             background: #fff;
             width: 0%;
+            transition: width 0.2s ease;
         }
 
         /* --- HEADER --- */
@@ -116,7 +117,6 @@
             gap: 3px;
         }
         
-        /* Header Actions */
         .header-actions {
             display: flex;
             align-items: center;
@@ -132,9 +132,50 @@
             align-items: center;
             justify-content: center;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-            transition: transform 0.1s;
         }
-        .icon-btn:active { transform: scale(0.9); }
+
+        /* --- NAVIGATION ARROWS --- */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.2); /* Very subtle background */
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 30;
+            pointer-events: auto;
+            backdrop-filter: blur(2px);
+            opacity: 0.6; /* Translucent */
+            transition: opacity 0.2s, transform 0.1s, background 0.2s;
+            color: #fff;
+        }
+        .nav-arrow:active {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-50%) scale(0.95);
+        }
+        /* Mobile hover state check (optional) */
+        @media (hover: hover) {
+            .nav-arrow:hover {
+                opacity: 0.9;
+                background: rgba(0, 0, 0, 0.4);
+            }
+        }
+        
+        .arrow-left { left: 10px; }
+        .arrow-right { right: 10px; }
+
+        .nav-arrow svg {
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+        }
 
         /* --- FOOTER --- */
         .footer {
@@ -164,19 +205,7 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
 
-        /* --- TOUCH ZONES --- */
-        .tap-zone {
-            position: absolute;
-            top: 70px; 
-            bottom: 80px; 
-            width: 50%;
-            z-index: 20;
-            pointer-events: auto;
-        }
-        .tap-left { left: 0; }
-        .tap-right { right: 0; }
-
-        /* Loader */
+        /* Loader & Error */
         .loader {
             position: absolute;
             top: 50%; left: 50%;
@@ -191,7 +220,6 @@
         }
         @keyframes spin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
 
-        /* Error Message */
         .error-msg {
             position: absolute;
             top: 50%; left: 50%;
@@ -211,25 +239,30 @@
 
 <div id="app-container">
     
-    <!-- AUDIO: "Gymnopedie No. 1" (Satie) -->
+    <!-- AUDIO: "Gymnopedie No. 1" -->
     <audio id="bg-audio" loop>
         <source src="https://raw.githubusercontent.com/noobsandnerdsgroup/audio/master/Gymnopedie%20No%201.mp3" type="audio/mpeg">
     </audio>
+
+    <!-- Navigation Arrows -->
+    <button class="nav-arrow arrow-left" id="btn-prev">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <button class="nav-arrow arrow-right" id="btn-next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
 
     <!-- Display Elements -->
     <div class="loader" id="loader"></div>
     <div class="error-msg" id="error-msg"></div>
     <img id="story-img" class="story-image" src="" alt="Story">
 
-    <!-- Touch Navigation Zones -->
-    <div class="tap-zone tap-left" id="tap-left"></div>
-    <div class="tap-zone tap-right" id="tap-right"></div>
-
     <!-- UI Overlay -->
     <div class="ui-layer">
         
         <!-- Top Section -->
         <div>
+            <!-- Static Progress Indicators -->
             <div class="progress-container" id="progress-container"></div>
 
             <div class="header">
@@ -243,14 +276,10 @@
                 </div>
                 
                 <div class="header-actions">
-                    <!-- Music Toggle -->
                     <button class="icon-btn" id="mute-btn">
-                        <!-- Muted Icon -->
                         <svg id="icon-muted" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
-                        <!-- Unmuted Icon -->
                         <svg id="icon-unmuted" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     </button>
-                    <!-- Close -->
                     <button class="icon-btn" onclick="alert('Close viewer')">
                         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
@@ -269,33 +298,24 @@
 
 <script>
     // --- CONFIGURATION ---
-    // Make sure these files are in the SAME folder as this HTML file.
     const stories = [
-        { url: './First.png', duration: 10000 },
-        { url: './Second.png', duration: 10000 },
-        { url: './Acropolis_Greece.png', duration: 5000 },
-        { url: './Bigben_UK.png', duration: 5000 },
-        { url: './CNtower_canada.png', duration: 5000 },
-        { url: './Colosseum_Italy.png', duration: 5000 },
-        { url: './EiffleTower_France.png', duration: 5000 },
-        { url: './Greatwall_chaina.png', duration: 5000 },
-        { url: './Osakacastle_japan.png', duration: 5000 },
-        { url: './SagradaFamilia_turkey.png', duration: 5000 },
-        { url: './SydneyHarbourBridge_Australia.png', duration: 5000 },
-        { url: './SydneyOperaHouse_Australia.png', duration: 5000 },
-        { url: './empirestatebuilding_usa.png', duration: 5000 },
-        { url: './hagiasophia_turkey.png', duration: 5000 },
-        { url: './statusleofliberty_usa.png', duration: 5000 },
-        { url: './Last.png', duration: 10000 }
+        { url: './Acropolis_Greece.png' },
+        { url: './Bigben_UK.png' },
+        { url: './CNtower_canada.png' },
+        { url: './Colosseum_Italy.png' },
+        { url: './EiffleTower_France.png' },
+        { url: './Greatwall_chaina.png' },
+        { url: './Osakacastle_japan.png' },
+        { url: './SagradaFamilia_turkey.png' },
+        { url: './SydneyHarbourBridge_Australia.png' },
+        { url: './SydneyOperaHouse_Australia.png' },
+        { url: './empirestatebuilding_usa.png' },
+        { url: './hagiasophia_turkey.png' },
+        { url: './statusleofliberty_usa.png' }
     ];
 
     // --- STATE ---
     let currentIndex = 0;
-    let startTime = 0;
-    let pausedTime = 0;
-    let isPaused = false;
-    let animationFrameId;
-    let remainingTime = 0;
     let isAudioPlaying = false;
 
     // --- ELEMENTS ---
@@ -307,6 +327,8 @@
     const muteBtn = document.getElementById('mute-btn');
     const iconMuted = document.getElementById('icon-muted');
     const iconUnmuted = document.getElementById('icon-unmuted');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
 
     // --- AUDIO LOGIC ---
     function toggleAudio() {
@@ -339,7 +361,7 @@
             audio.play().then(() => {
                 isAudioPlaying = true;
                 updateMuteIcon(true);
-            }).catch(() => { /* Blocked */ });
+            }).catch(() => {});
         }
     }
 
@@ -351,6 +373,18 @@
         muteBtn.addEventListener('click', (e) => {
             e.stopPropagation(); 
             toggleAudio();
+        });
+        
+        btnPrev.addEventListener('click', (e) => {
+            e.stopPropagation();
+            prevStory();
+            ensureAudioPlays();
+        });
+
+        btnNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            nextStory();
+            ensureAudioPlays();
         });
     }
 
@@ -369,14 +403,12 @@
 
     // --- STORY LOAD LOGIC ---
     function loadStory(index) {
+        // Bounds check
         if (index < 0) index = 0;
-        if (index >= stories.length) { 
-            index = 0; 
-        }
+        if (index >= stories.length) index = 0; // Loop back to start if at end
 
         currentIndex = index;
-        cancelAnimationFrame(animationFrameId);
-        resetProgressBars();
+        updateProgressBars();
         
         // UI Reset
         loader.style.display = 'block';
@@ -391,49 +423,27 @@
             imgElement.src = stories[index].url;
             imgElement.style.opacity = '1';
             loader.style.display = 'none';
-            startTimer(stories[index].duration);
         };
 
         img.onerror = () => {
             loader.style.display = 'none';
             errorMsg.style.display = 'block';
-            errorMsg.innerText = `Image not found:\n${stories[index].url}\nSkipping...`;
-            setTimeout(() => {
-                nextStory();
-            }, 2000);
+            errorMsg.innerText = `Image not found:\n${stories[index].url}`;
         };
     }
 
-    function startTimer(duration) {
-        startTime = Date.now();
-        remainingTime = duration;
-        isPaused = false;
-        
-        function animate() {
-            if (isPaused) return;
-
-            const now = Date.now();
-            const elapsed = now - startTime;
-            const progress = Math.min((elapsed / duration) * 100, 100);
-
-            const currentFill = document.getElementById(`fill-${currentIndex}`);
-            if (currentFill) currentFill.style.width = `${progress}%`;
-
-            if (elapsed < duration) {
-                animationFrameId = requestAnimationFrame(animate);
-            } else {
-                nextStory();
-            }
-        }
-        animationFrameId = requestAnimationFrame(animate);
-    }
-
-    function resetProgressBars() {
+    function updateProgressBars() {
+        // Since we removed time, the bars act as position indicators.
+        // Bars before current = 100% white.
+        // Current bar = 100% white.
+        // Bars after current = 0% (transparent/grey).
         stories.forEach((_, i) => {
             const fill = document.getElementById(`fill-${i}`);
-            fill.style.transition = 'none'; 
-            if (i < currentIndex) fill.style.width = '100%';
-            else fill.style.width = '0%';
+            if (i <= currentIndex) {
+                fill.style.width = '100%';
+            } else {
+                fill.style.width = '0%';
+            }
         });
     }
 
@@ -442,92 +452,16 @@
         if (currentIndex < stories.length - 1) {
             loadStory(currentIndex + 1);
         } else {
-            loadStory(0); // Restart
+            // Loop back to start
+            loadStory(0);
         }
     }
 
     function prevStory() {
         if (currentIndex > 0) {
-            const currentFill = document.getElementById(`fill-${currentIndex}`);
-            if(currentFill) currentFill.style.width = '0%';
             loadStory(currentIndex - 1);
-        } else {
-            loadStory(0);
         }
     }
-
-    function pauseStory() {
-        if (isPaused) return;
-        isPaused = true;
-        cancelAnimationFrame(animationFrameId);
-        pausedTime = Date.now();
-        const elapsed = pausedTime - startTime;
-        remainingTime = stories[currentIndex].duration - elapsed;
-    }
-
-    function resumeStory() {
-        if (!isPaused) return;
-        isPaused = false;
-        startTime = Date.now() - (stories[currentIndex].duration - remainingTime);
-        
-        function animate() {
-            if (isPaused) return;
-            const duration = stories[currentIndex].duration;
-            const now = Date.now();
-            const elapsed = now - startTime;
-            const progress = Math.min((elapsed / duration) * 100, 100);
-
-            const currentFill = document.getElementById(`fill-${currentIndex}`);
-            if(currentFill) currentFill.style.width = `${progress}%`;
-
-            if (elapsed < duration) {
-                animationFrameId = requestAnimationFrame(animate);
-            } else {
-                nextStory();
-            }
-        }
-        animationFrameId = requestAnimationFrame(animate);
-    }
-
-    // --- INTERACTION ---
-    const tapLeft = document.getElementById('tap-left');
-    const tapRight = document.getElementById('tap-right');
-    let pressTimer;
-
-    const handlePressStart = () => {
-        pressTimer = setTimeout(() => {
-            pauseStory();
-            document.querySelector('.header').style.opacity = '0';
-            document.querySelector('.footer').style.opacity = '0';
-            document.querySelector('.progress-container').style.opacity = '0';
-        }, 200);
-    };
-
-    const handlePressEnd = (e, isRight) => {
-        clearTimeout(pressTimer);
-        document.querySelector('.header').style.opacity = '1';
-        document.querySelector('.footer').style.opacity = '1';
-        document.querySelector('.progress-container').style.opacity = '1';
-
-        ensureAudioPlays();
-
-        if (isPaused) {
-            resumeStory();
-        } else {
-            if (isRight) nextStory();
-            else prevStory();
-        }
-    };
-
-    tapRight.addEventListener('mousedown', handlePressStart);
-    tapRight.addEventListener('touchstart', handlePressStart);
-    tapRight.addEventListener('mouseup', (e) => handlePressEnd(e, true));
-    tapRight.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, true); });
-
-    tapLeft.addEventListener('mousedown', handlePressStart);
-    tapLeft.addEventListener('touchstart', handlePressStart);
-    tapLeft.addEventListener('mouseup', (e) => handlePressEnd(e, false));
-    tapLeft.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(e, false); });
 
     init();
 
