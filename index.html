@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>World Landmarks Viewer</title>
+    <title>Review Viewer</title>
     <style>
         /* --- RESET & BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -25,7 +25,7 @@
             height: 100%;
             max-width: 480px; 
             position: relative;
-            background: #222;
+            background: #000;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -36,13 +36,14 @@
         .story-image {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Fit whole image */
             position: absolute;
             top: 0;
             left: 0;
             z-index: 1;
             opacity: 0; 
-            transition: opacity 0.4s ease-in-out;
+            transition: opacity 0.3s ease-in-out;
+            background-color: #000;
         }
 
         /* --- UI OVERLAYS --- */
@@ -56,14 +57,14 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            pointer-events: none; /* Let clicks pass through */
-            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.6) 100%);
+            pointer-events: none; 
+            background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 15%, rgba(0,0,0,0) 85%, rgba(0,0,0,0.8) 100%);
         }
 
-        /* --- PROGRESS BARS (Static Indicators) --- */
+        /* --- PROGRESS BARS --- */
         .progress-container {
             display: flex;
-            gap: 4px;
+            gap: 2px;
             padding: 12px 10px 0;
             width: 100%;
         }
@@ -139,7 +140,7 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.2); /* Very subtle background */
+            background: rgba(0, 0, 0, 0.3); 
             border: none;
             border-radius: 50%;
             width: 44px;
@@ -150,24 +151,16 @@
             cursor: pointer;
             z-index: 30;
             pointer-events: auto;
-            backdrop-filter: blur(2px);
-            opacity: 0.6; /* Translucent */
-            transition: opacity 0.2s, transform 0.1s, background 0.2s;
+            backdrop-filter: blur(4px);
+            opacity: 0.6;
+            transition: all 0.2s;
             color: #fff;
         }
         .nav-arrow:active {
             opacity: 1;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.2);
             transform: translateY(-50%) scale(0.95);
         }
-        /* Mobile hover state check (optional) */
-        @media (hover: hover) {
-            .nav-arrow:hover {
-                opacity: 0.9;
-                background: rgba(0, 0, 0, 0.4);
-            }
-        }
-        
         .arrow-left { left: 10px; }
         .arrow-right { right: 10px; }
 
@@ -177,33 +170,53 @@
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
         }
 
-        /* --- FOOTER --- */
+        /* --- FOOTER (INPUT AREA) --- */
         .footer {
             padding: 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             pointer-events: auto;
+            background: rgba(0,0,0,0.3); /* Subtle background for text readability */
         }
         .message-box {
             flex: 1;
             height: 46px;
             border: 1px solid rgba(255,255,255,0.6);
             border-radius: 23px;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.4);
             color: white;
             padding: 0 20px;
             font-size: 14px;
             backdrop-filter: blur(4px);
+            transition: border-color 0.2s, background 0.2s;
         }
-        .message-box::placeholder { color: rgba(255,255,255,0.9); }
-        .action-icon {
-            width: 28px;
-            height: 28px;
-            fill: white;
+        .message-box:focus {
+            border-color: #fff;
+            background: rgba(0,0,0,0.7);
+        }
+        .message-box::placeholder { color: rgba(255,255,255,0.7); font-style: italic; }
+        
+        /* Send Button */
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #0095f6; /* Instagram Blue */
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
+        .send-btn svg {
+            fill: white;
+            width: 20px;
+            height: 20px;
+            margin-left: 2px; /* Visual centering */
+        }
+        .send-btn:active { background: #007bb5; }
 
         /* Loader & Error */
         .loader {
@@ -230,7 +243,6 @@
             z-index: 4;
             display: none;
             width: 80%;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
 
     </style>
@@ -239,7 +251,7 @@
 
 <div id="app-container">
     
-    <!-- AUDIO: "Gymnopedie No. 1" -->
+    <!-- AUDIO -->
     <audio id="bg-audio" loop>
         <source src="https://raw.githubusercontent.com/noobsandnerdsgroup/audio/master/Gymnopedie%20No%201.mp3" type="audio/mpeg">
     </audio>
@@ -262,16 +274,14 @@
         
         <!-- Top Section -->
         <div>
-            <!-- Static Progress Indicators -->
             <div class="progress-container" id="progress-container"></div>
 
             <div class="header">
-                <img src="https://ui-avatars.com/api/?name=World+Tour&background=0066cc&color=fff" class="avatar" alt="User">
+                <img src="https://ui-avatars.com/api/?name=Review+Mode&background=222&color=fff" class="avatar" alt="User">
                 <div class="user-info">
-                    <span class="username">global_explorer</span>
-                    <span class="location-tag">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        World Tour
+                    <span class="username">status_reviewer</span>
+                    <span class="location-tag" id="filename-display">
+                        Loading...
                     </span>
                 </div>
                 
@@ -280,18 +290,16 @@
                         <svg id="icon-muted" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                         <svg id="icon-unmuted" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     </button>
-                    <button class="icon-btn" onclick="alert('Close viewer')">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Section -->
+        <!-- Bottom Section (Data Input) -->
         <div class="footer">
-            <input type="text" class="message-box" placeholder="Reply to global_explorer...">
-            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <input type="text" id="note-input" class="message-box" placeholder="Type note & click Next..." autocomplete="off">
+            <button class="send-btn" id="save-btn">
+                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
         </div>
     </div>
 </div>
@@ -320,20 +328,190 @@
     // --- STATE ---
     let currentIndex = 0;
     let isAudioPlaying = false;
+    let userNotes = {}; // Object to store notes: { 0: "Cool", 1: "Bad lighting" }
 
     // --- ELEMENTS ---
     const imgElement = document.getElementById('story-img');
     const progressContainer = document.getElementById('progress-container');
+    const filenameDisplay = document.getElementById('filename-display');
     const loader = document.getElementById('loader');
     const errorMsg = document.getElementById('error-msg');
+    
+    // Audio
     const audio = document.getElementById('bg-audio');
     const muteBtn = document.getElementById('mute-btn');
     const iconMuted = document.getElementById('icon-muted');
     const iconUnmuted = document.getElementById('icon-unmuted');
+    
+    // Controls
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
+    const noteInput = document.getElementById('note-input');
+    const saveBtn = document.getElementById('save-btn');
 
-    // --- AUDIO LOGIC ---
+    // --- INIT ---
+    function init() {
+        createProgressBars();
+        loadStory(currentIndex);
+        
+        // Audio Toggle
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            toggleAudio();
+        });
+        
+        // --- NAVIGATION HANDLERS ---
+        
+        // Previous Button
+        btnPrev.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveCurrentNote(); // Save before moving back
+            prevStory();
+        });
+
+        // Next Button (Arrows)
+        btnNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveCurrentNote(); // Save before moving forward
+            nextStory();
+        });
+
+        // Save/Send Button (Same as Next)
+        saveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveCurrentNote();
+            nextStory();
+        });
+
+        // Enter Key in Input (Same as Next)
+        noteInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveCurrentNote();
+                nextStory();
+                noteInput.blur(); // Dismiss keyboard on mobile? Optional.
+            }
+        });
+    }
+
+    // --- DATA HANDLING ---
+
+    function saveCurrentNote() {
+        const val = noteInput.value.trim();
+        // Save even if empty (to overwrite previous if deleted)
+        userNotes[currentIndex] = val; 
+    }
+
+    function restoreNote(index) {
+        // If we have a note saved, show it. Otherwise empty.
+        if (userNotes[index]) {
+            noteInput.value = userNotes[index];
+        } else {
+            noteInput.value = '';
+        }
+    }
+
+    function finishTour() {
+        // Generate Report
+        let report = "📸 PHOTO REVIEW REPORT 📸\n\n";
+        
+        stories.forEach((story, idx) => {
+            // Clean filename for display
+            const name = story.url.replace('./', '').replace('.png', '').replace('.jpg', '');
+            const note = userNotes[idx] ? userNotes[idx] : "—"; // Dash if empty
+            report += `${idx + 1}. ${name}: ${note}\n`;
+        });
+
+        // Copy to Clipboard
+        navigator.clipboard.writeText(report).then(() => {
+            alert("✅ All reviews copied to clipboard!\n\nPaste them into your notes app.");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert("Could not copy automatically. Check console.");
+        });
+    }
+
+    // --- CORE LOGIC ---
+
+    function createProgressBars() {
+        progressContainer.innerHTML = '';
+        stories.forEach((_, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'progress-bar';
+            const fill = document.createElement('div');
+            fill.className = 'progress-fill';
+            fill.id = `fill-${index}`;
+            bar.appendChild(fill);
+            progressContainer.appendChild(bar);
+        });
+    }
+
+    function loadStory(index) {
+        if (index < 0) index = 0;
+        
+        // Update State
+        currentIndex = index;
+        updateProgressBars();
+        restoreNote(index); // Put saved text back into box
+
+        // UI Reset
+        loader.style.display = 'block';
+        errorMsg.style.display = 'none';
+        imgElement.style.opacity = '0';
+        
+        // Update Header Text with Clean Filename
+        const cleanName = stories[index].url.split('/').pop().replace('.png','').replace('.jpg','');
+        filenameDisplay.innerText = cleanName;
+        noteInput.placeholder = `Note for ${cleanName}...`;
+
+        // Load Image
+        const img = new Image();
+        img.src = stories[index].url;
+        
+        img.onload = () => {
+            imgElement.src = stories[index].url;
+            imgElement.style.opacity = '1';
+            loader.style.display = 'none';
+            ensureAudioPlays();
+        };
+
+        img.onerror = () => {
+            loader.style.display = 'none';
+            errorMsg.style.display = 'block';
+            errorMsg.innerText = `Image not found:\n${stories[index].url}`;
+        };
+    }
+
+    function updateProgressBars() {
+        stories.forEach((_, i) => {
+            const fill = document.getElementById(`fill-${i}`);
+            if (i <= currentIndex) {
+                fill.style.width = '100%';
+            } else {
+                fill.style.width = '0%';
+            }
+        });
+    }
+
+    // --- NAVIGATION ---
+
+    function nextStory() {
+        if (currentIndex < stories.length - 1) {
+            loadStory(currentIndex + 1);
+        } else {
+            // End of list reached
+            finishTour();
+        }
+    }
+
+    function prevStory() {
+        if (currentIndex > 0) {
+            loadStory(currentIndex - 1);
+        }
+    }
+
+    // --- AUDIO ---
+    
     function toggleAudio() {
         if (audio.paused) {
             audio.volume = 0.5;
@@ -368,104 +546,7 @@
         }
     }
 
-    // --- INIT ---
-    function init() {
-        createProgressBars();
-        loadStory(currentIndex);
-        
-        muteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            toggleAudio();
-        });
-        
-        btnPrev.addEventListener('click', (e) => {
-            e.stopPropagation();
-            prevStory();
-            ensureAudioPlays();
-        });
-
-        btnNext.addEventListener('click', (e) => {
-            e.stopPropagation();
-            nextStory();
-            ensureAudioPlays();
-        });
-    }
-
-    function createProgressBars() {
-        progressContainer.innerHTML = '';
-        stories.forEach((_, index) => {
-            const bar = document.createElement('div');
-            bar.className = 'progress-bar';
-            const fill = document.createElement('div');
-            fill.className = 'progress-fill';
-            fill.id = `fill-${index}`;
-            bar.appendChild(fill);
-            progressContainer.appendChild(bar);
-        });
-    }
-
-    // --- STORY LOAD LOGIC ---
-    function loadStory(index) {
-        // Bounds check
-        if (index < 0) index = 0;
-        if (index >= stories.length) index = 0; // Loop back to start if at end
-
-        currentIndex = index;
-        updateProgressBars();
-        
-        // UI Reset
-        loader.style.display = 'block';
-        errorMsg.style.display = 'none';
-        imgElement.style.opacity = '0';
-        
-        // Preload
-        const img = new Image();
-        img.src = stories[index].url;
-        
-        img.onload = () => {
-            imgElement.src = stories[index].url;
-            imgElement.style.opacity = '1';
-            loader.style.display = 'none';
-        };
-
-        img.onerror = () => {
-            loader.style.display = 'none';
-            errorMsg.style.display = 'block';
-            errorMsg.innerText = `Image not found:\n${stories[index].url}`;
-        };
-    }
-
-    function updateProgressBars() {
-        // Since we removed time, the bars act as position indicators.
-        // Bars before current = 100% white.
-        // Current bar = 100% white.
-        // Bars after current = 0% (transparent/grey).
-        stories.forEach((_, i) => {
-            const fill = document.getElementById(`fill-${i}`);
-            if (i <= currentIndex) {
-                fill.style.width = '100%';
-            } else {
-                fill.style.width = '0%';
-            }
-        });
-    }
-
-    // --- NAVIGATION ---
-    function nextStory() {
-        if (currentIndex < stories.length - 1) {
-            loadStory(currentIndex + 1);
-        } else {
-            // Loop back to start
-            loadStory(0);
-        }
-    }
-
-    function prevStory() {
-        if (currentIndex > 0) {
-            loadStory(currentIndex - 1);
-        }
-    }
-
+    // Start
     init();
 
 </script>
