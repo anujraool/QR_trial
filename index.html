@@ -164,6 +164,19 @@
         .arrow-left { left: 10px; }
         .arrow-right { right: 10px; }
 
+        /* --- TAP ZONES (Invisible click areas) --- */
+        /* Adjusted bottom to prevent overlap with the higher footer */
+        .tap-zone {
+            position: absolute;
+            top: 70px; 
+            bottom: 160px; /* Ends much higher now */
+            width: 50%;
+            z-index: 20;
+            pointer-events: auto;
+        }
+        .tap-left { left: 0; }
+        .tap-right { right: 0; }
+
         .nav-arrow svg {
             width: 28px;
             height: 28px;
@@ -172,15 +185,17 @@
 
         /* --- FOOTER (INPUT AREA) --- */
         .footer {
-            /* Input Area Pushed Up for Mobile Keyboards */
-            padding: 16px 16px 50px 16px; 
-            padding-bottom: calc(50px + env(safe-area-inset-bottom));
+            /* SHIFTED UP SIGNIFICANTLY */
+            padding: 16px 16px 100px 16px; 
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
             
             display: flex;
             align-items: center;
             gap: 10px;
             pointer-events: auto;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0)); 
+            /* Taller gradient to cover the lifted area */
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0)); 
+            z-index: 35; /* Higher than tap zones */
         }
         .message-box {
             flex: 1;
@@ -266,6 +281,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
     </button>
 
+    <!-- Tap Zones (Hidden) -->
+    <div class="tap-zone tap-left" id="tap-left"></div>
+    <div class="tap-zone tap-right" id="tap-right"></div>
+
     <!-- Display Elements -->
     <div class="loader" id="loader"></div>
     <div class="error-msg" id="error-msg"></div>
@@ -346,6 +365,8 @@
     const btnNext = document.getElementById('btn-next');
     const noteInput = document.getElementById('note-input');
     const saveBtn = document.getElementById('save-btn');
+    const tapLeft = document.getElementById('tap-left');
+    const tapRight = document.getElementById('tap-right');
 
     // --- INIT ---
     function init() {
@@ -357,32 +378,34 @@
             toggleAudio();
         });
         
-        btnPrev.addEventListener('click', (e) => {
-            e.stopPropagation();
-            saveCurrentNote(); 
-            prevStory();
-        });
-
-        btnNext.addEventListener('click', (e) => {
-            e.stopPropagation();
-            saveCurrentNote(); 
-            nextStory();
-        });
-
-        saveBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            saveCurrentNote();
-            nextStory();
-        });
+        // Button Listeners
+        btnPrev.addEventListener('click', goPrev);
+        btnNext.addEventListener('click', goNext);
+        saveBtn.addEventListener('click', goNext);
+        
+        // Tap Zones (Invisible areas)
+        tapLeft.addEventListener('click', goPrev);
+        tapRight.addEventListener('click', goNext);
 
         noteInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                saveCurrentNote();
-                nextStory();
+                goNext();
                 noteInput.blur(); 
             }
         });
+    }
+
+    function goNext(e) {
+        if(e) e.stopPropagation();
+        saveCurrentNote(); 
+        nextStory();
+    }
+
+    function goPrev(e) {
+        if(e) e.stopPropagation();
+        saveCurrentNote(); 
+        prevStory();
     }
 
     // --- DATA HANDLING ---
