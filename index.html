@@ -165,11 +165,10 @@
         .arrow-right { right: 10px; }
 
         /* --- TAP ZONES (Invisible click areas) --- */
-        /* Adjusted bottom to prevent overlap with the higher footer */
         .tap-zone {
             position: absolute;
             top: 70px; 
-            bottom: 160px; /* Ends much higher now */
+            bottom: 160px;
             width: 50%;
             z-index: 20;
             pointer-events: auto;
@@ -191,12 +190,24 @@
             
             display: flex;
             align-items: center;
+            justify-content: center; /* Center content when input is hidden */
             gap: 10px;
             pointer-events: auto;
             /* Taller gradient to cover the lifted area */
             background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, rgba(0,0,0,0)); 
-            z-index: 35; /* Higher than tap zones */
+            z-index: 35;
+            min-height: 160px; /* Ensure gradient height */
+            align-items: flex-end; /* Align items to bottom of padding */
         }
+        
+        /* Input and Button Container */
+        .input-group {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            align-items: center;
+        }
+
         .message-box {
             flex: 1;
             height: 46px;
@@ -226,6 +237,7 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
         .send-btn svg {
             fill: white;
@@ -234,6 +246,16 @@
             margin-left: 2px;
         }
         .send-btn:active { background: #007bb5; }
+
+        /* Instruction Text (Shown when not a question) */
+        .instruction-text {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            display: none; /* Hidden by default */
+            margin-bottom: 12px;
+        }
 
         /* Loader & Error */
         .loader {
@@ -317,33 +339,43 @@
 
         <!-- Bottom Section (Data Input) -->
         <div class="footer">
-            <input type="text" id="note-input" class="message-box" placeholder="Which is this location?" autocomplete="off">
-            <button class="send-btn" id="save-btn">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-            </button>
+            <!-- Normal Input Mode -->
+            <div class="input-group" id="input-group">
+                <input type="text" id="note-input" class="message-box" placeholder="Which is this location?" autocomplete="off">
+                <button class="send-btn" id="save-btn">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
+            <!-- Instruction Mode -->
+            <div class="instruction-text" id="instruction-text">
+                Tap right arrow > to continue
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     // --- CONFIGURATION ---
+    // Added 'isQuestion' field. 
+    // false = Info only (No input). 
+    // true = Question (Input enabled).
     const stories = [
-        { url: './First.png' },
-        { url: './Second.png' },
-        { url: './Acropolis_Greece.png' },
-        { url: './Bigben_UK.png' },
-        { url: './CNtower_canada.png' },
-        { url: './Colosseum_Italy.png' },
-        { url: './EiffleTower_France.png' },
-        { url: './Greatwall_chaina.png' },
-        { url: './Osakacastle_japan.png' },
-        { url: './SagradaFamilia_turkey.png' },
-        { url: './SydneyHarbourBridge_Australia.png' },
-        { url: './SydneyOperaHouse_Australia.png' },
-        { url: './empirestatebuilding_usa.png' },
-        { url: './hagiasophia_turkey.png' },
-        { url: './statusleofliberty_usa.png' },
-        { url: './Last.png' }
+        { url: './First.png', isQuestion: false },
+        { url: './Second.png', isQuestion: false },
+        { url: './Acropolis_Greece.png', isQuestion: true },
+        { url: './Bigben_UK.png', isQuestion: true },
+        { url: './CNtower_canada.png', isQuestion: true },
+        { url: './Colosseum_Italy.png', isQuestion: true },
+        { url: './EiffleTower_France.png', isQuestion: true },
+        { url: './Greatwall_chaina.png', isQuestion: true },
+        { url: './Osakacastle_japan.png', isQuestion: true },
+        { url: './SagradaFamilia_turkey.png', isQuestion: true },
+        { url: './SydneyHarbourBridge_Australia.png', isQuestion: true },
+        { url: './SydneyOperaHouse_Australia.png', isQuestion: true },
+        { url: './empirestatebuilding_usa.png', isQuestion: true },
+        { url: './hagiasophia_turkey.png', isQuestion: true },
+        { url: './statusleofliberty_usa.png', isQuestion: true },
+        { url: './Last.png', isQuestion: false }
     ];
 
     // --- STATE ---
@@ -367,6 +399,8 @@
     const saveBtn = document.getElementById('save-btn');
     const tapLeft = document.getElementById('tap-left');
     const tapRight = document.getElementById('tap-right');
+    const inputGroup = document.getElementById('input-group');
+    const instructionText = document.getElementById('instruction-text');
 
     // --- INIT ---
     function init() {
@@ -383,7 +417,7 @@
         btnNext.addEventListener('click', goNext);
         saveBtn.addEventListener('click', goNext);
         
-        // Tap Zones (Invisible areas)
+        // Tap Zones
         tapLeft.addEventListener('click', goPrev);
         tapRight.addEventListener('click', goNext);
 
@@ -398,13 +432,13 @@
 
     function goNext(e) {
         if(e) e.stopPropagation();
-        saveCurrentNote(); 
+        if(stories[currentIndex].isQuestion) saveCurrentNote(); 
         nextStory();
     }
 
     function goPrev(e) {
         if(e) e.stopPropagation();
-        saveCurrentNote(); 
+        if(stories[currentIndex].isQuestion) saveCurrentNote(); 
         prevStory();
     }
 
@@ -424,12 +458,23 @@
 
     function finishTour() {
         let report = "🌍 LOCATION QUIZ ANSWERS 🌍\n\n";
-        
+        let questionCounter = 1;
+        let answeredCount = 0;
+
         stories.forEach((story, idx) => {
-            // Masked name "Location X" instead of filename
-            const answer = userNotes[idx] ? userNotes[idx] : "—"; 
-            report += `${idx + 1}. Location ${idx + 1}: ${answer}\n`;
+            if (story.isQuestion) {
+                // Only report answers for actual questions
+                const answer = userNotes[idx] ? userNotes[idx] : "—"; 
+                report += `${questionCounter}. Location ${questionCounter}: ${answer}\n`;
+                questionCounter++;
+                answeredCount++;
+            }
         });
+
+        if (answeredCount === 0) {
+            alert("No questions were answered.");
+            return;
+        }
 
         navigator.clipboard.writeText(report).then(() => {
             alert("✅ Quiz Finished! \n\nYour answers have been copied to the clipboard.");
@@ -437,6 +482,15 @@
             console.error('Failed to copy: ', err);
             alert("Quiz finished. Could not auto-copy to clipboard.");
         });
+    }
+
+    // --- HELPER: Count Questions ---
+    function getQuestionIndex(realIndex) {
+        let count = 0;
+        for (let i = 0; i <= realIndex; i++) {
+            if (stories[i].isQuestion) count++;
+        }
+        return count;
     }
 
     // --- CORE LOGIC ---
@@ -458,21 +512,36 @@
         
         currentIndex = index;
         updateProgressBars();
-        restoreNote(index); 
 
         loader.style.display = 'block';
         errorMsg.style.display = 'none';
         imgElement.style.opacity = '0';
-        
-        // HIDE THE CLUE: Show "Location X"
-        filenameDisplay.innerText = `Location ${index + 1}`;
-        noteInput.placeholder = "Which is this location?";
+
+        const currentStory = stories[index];
+
+        // --- UI SWITCHING BASED ON QUESTION FLAG ---
+        if (currentStory.isQuestion) {
+            // It's a question: Show Input, Show Location Number
+            inputGroup.style.display = 'flex';
+            instructionText.style.display = 'none';
+            
+            restoreNote(index); 
+            
+            const qNum = getQuestionIndex(index);
+            filenameDisplay.innerText = `Location ${qNum}`;
+        } else {
+            // It's an instruction: Hide Input, Show Instructions
+            inputGroup.style.display = 'none';
+            instructionText.style.display = 'block';
+            
+            filenameDisplay.innerText = "Info";
+        }
 
         const img = new Image();
-        img.src = stories[index].url;
+        img.src = currentStory.url;
         
         img.onload = () => {
-            imgElement.src = stories[index].url;
+            imgElement.src = currentStory.url;
             imgElement.style.opacity = '1';
             loader.style.display = 'none';
             ensureAudioPlays();
@@ -481,7 +550,7 @@
         img.onerror = () => {
             loader.style.display = 'none';
             errorMsg.style.display = 'block';
-            errorMsg.innerText = `Image not found:\n${stories[index].url}`;
+            errorMsg.innerText = `Image not found:\n${currentStory.url}`;
         };
     }
 
