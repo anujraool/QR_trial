@@ -172,10 +172,8 @@
 
         /* --- FOOTER (INPUT AREA) --- */
         .footer {
-            /* Modified Padding to shift input up */
+            /* Input Area Pushed Up for Mobile Keyboards */
             padding: 16px 16px 50px 16px; 
-            
-            /* Add Mobile Safe Area (iPhone X+) */
             padding-bottom: calc(50px + env(safe-area-inset-bottom));
             
             display: flex;
@@ -405,10 +403,9 @@
         let report = "🌍 LOCATION QUIZ ANSWERS 🌍\n\n";
         
         stories.forEach((story, idx) => {
-            // Keep filename hidden in UI, but use it for the final report to check answers
-            const name = story.url.replace('./', '').replace('.png', '').replace('.jpg', '');
+            // Masked name "Location X" instead of filename
             const answer = userNotes[idx] ? userNotes[idx] : "—"; 
-            report += `${idx + 1}. Filename: ${name} | User Guess: ${answer}\n`;
+            report += `${idx + 1}. Location ${idx + 1}: ${answer}\n`;
         });
 
         navigator.clipboard.writeText(report).then(() => {
@@ -444,7 +441,7 @@
         errorMsg.style.display = 'none';
         imgElement.style.opacity = '0';
         
-        // HIDE THE CLUE: Show "Location X" instead of filename
+        // HIDE THE CLUE: Show "Location X"
         filenameDisplay.innerText = `Location ${index + 1}`;
         noteInput.placeholder = "Which is this location?";
 
